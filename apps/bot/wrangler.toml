@@ -1,0 +1,11 @@
+# Bot de Telegram en Cloudflare Workers (plan gratuito).
+# Despliegue: npm run deploy -w @aviles/bot   ·   Guía completa: DEPLOY.md
+name = "aire-aviles-bot"
+main = "src/worker.ts"
+compatibility_date = "2026-11-01"
+
+# Los secretos NO van aquí: se guardan con `npx wrangler secret put <NOMBRE>`
+#   TELEGRAM_BOT_TOKEN, DATABASE_URL, DATABASE_AUTH_TOKEN, WEBHOOK_SECRET
+
+[observability]
+enabled = true

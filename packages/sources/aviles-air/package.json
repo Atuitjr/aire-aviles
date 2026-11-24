@@ -1,0 +1,15 @@
+{
+  "name": "@aviles/source-aviles-air",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "probe": "tsx src/probe.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aviles/core": "*"
+  }
+}

@@ -1,0 +1,47 @@
+# Ingesta horaria: descarga los datos de la EEA, los guarda en Turso y envía los avisos por Telegram.
+#
+# Disparadores:
+#   - workflow_dispatch: lo llama cron-job.org cada hora (fiable). También se puede lanzar a mano.
+#   - schedule: respaldo por si cron-job.org falla. El cron de GitHub puede retrasarse bastante,
+#     por eso no es el disparador principal. Si coinciden dos ejecuciones, la segunda espera
+#     (concurrency) y no duplica nada: las medidas repetidas se descartan en la BD.
+#
+# Secretos necesarios (Settings → Secrets and variables → Actions):
+#   DATABASE_URL, DATABASE_AUTH_TOKEN, TELEGRAM_BOT_TOKEN
+
+name: Ingesta horaria
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 */3 * * *"
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Solo las dependencias del worker (no instala Astro, wrangler...)
+      - name: Instalar dependencias
+        run: npm ci --workspace @aviles/worker --include-workspace-root --no-audit --no-fund
+
+      - name: Ingesta
+        run: npm run ingest:once
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

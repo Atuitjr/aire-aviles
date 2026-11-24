@@ -1,0 +1,22 @@
+{
+  "name": "@aviles/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --include \"../../packages/**/*.ts\" src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aviles/core": "*",
+    "@aviles/db": "*",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.44.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0"
+  }
+}

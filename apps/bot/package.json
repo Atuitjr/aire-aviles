@@ -1,0 +1,24 @@
+{
+  "name": "@aviles/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --include \"../../packages/**/*.ts\" src/index.ts",
+    "start": "tsx src/index.ts",
+    "deploy": "wrangler deploy",
+    "logs": "wrangler tail",
+    "set-webhook": "tsx src/set-webhook.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aviles/core": "*",
+    "@aviles/db": "*",
+    "@aviles/telegram": "*",
+    "drizzle-orm": "^0.44.0",
+    "grammy": "^1.48.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.168.0"
+  }
+}

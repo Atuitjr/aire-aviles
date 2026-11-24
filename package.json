@@ -1,0 +1,32 @@
+{
+  "name": "aviles-alertas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "packages/sources/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @aviles/api",
+    "dev:worker": "npm run dev -w @aviles/worker",
+    "dev:web": "npm run dev -w @aviles/web",
+    "dev:bot": "npm run dev -w @aviles/bot",
+    "ingest:once": "npm run once -w @aviles/worker",
+    "db:push": "npm run push -w @aviles/db",
+    "probe:aviles": "npm run probe -w @aviles/source-aviles-air",
+    "probe:eea": "npm run probe -w @aviles/source-eea-air --",
+    "check:offset": "npm run check-offset -w @aviles/source-eea-air --",
+    "probe:stations": "npm run probe-stations -w @aviles/source-eea-air",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

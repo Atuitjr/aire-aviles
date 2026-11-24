@@ -1,0 +1,21 @@
+{
+  "name": "@aviles/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --include \"../../packages/**/*.ts\" src/index.ts",
+    "once": "tsx src/index.ts --once",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@aviles/core": "*",
+    "@aviles/db": "*",
+    "@aviles/source-aviles-air": "*",
+    "@aviles/source-eea-air": "*",
+    "@aviles/telegram": "*",
+    "drizzle-orm": "^0.44.0",
+    "node-cron": "^4.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import StationList from "../components/StationList.tsx";
+---
+
+<Layout title="Calidad del aire en Avilés">
+  <h1>Calidad del aire en Avilés</h1>
+  <p>Últimas medidas de las estaciones municipales.</p>
+  <StationList client:load apiUrl={import.meta.env.PUBLIC_API_URL ?? "http://localhost:3001"} />
+</Layout>
