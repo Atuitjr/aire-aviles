@@ -14,6 +14,7 @@
     "dev:web": "npm run dev -w @aviles/web",
     "dev:bot": "npm run dev -w @aviles/bot",
     "ingest:once": "npm run once -w @aviles/worker",
+    "backfill": "npm run backfill -w @aviles/worker --",
     "db:push": "npm run push -w @aviles/db",
     "probe:aviles": "npm run probe -w @aviles/source-aviles-air",
     "probe:eea": "npm run probe -w @aviles/source-eea-air --",

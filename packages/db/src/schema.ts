@@ -87,3 +87,38 @@ export const alertsLog = sqliteTable(
   },
   (t) => [index("alerts_log_station_time").on(t.stationId, t.sentAt)],
 );
+
+/**
+ * Medias diarias por estación y contaminante. Es el histórico largo (desde 2015):
+ * ocupa ~24 veces menos que los datos horarios y basta para gráficas de meses y años.
+ *
+ * El día va en UTC+1 fija, igual que los datos oficiales: una hora que termina a las 24:00
+ * cuenta para ese día, no para el siguiente.
+ */
+export const dailyStats = sqliteTable(
+  "daily_stats",
+  {
+    stationId: text("station_id")
+      .notNull()
+      .references(() => stations.id),
+    metric: text("metric").notNull(),
+    /** "2025-01-31" */
+    day: text("day").notNull(),
+    mean: real("mean").notNull(),
+    max: real("max").notNull(),
+    /** Horas con dato válido ese día (0-24) */
+    hours: integer("hours").notNull(),
+    unit: text("unit").notNull(),
+  },
+  (t) => [uniqueIndex("daily_stats_pk").on(t.stationId, t.metric, t.day)],
+);
+
+/**
+ * Resúmenes ya calculados para la web ("status", "recent:<estación>", "history:<estación>").
+ * Los genera la ingesta; la API solo lee una fila por petición, así las visitas no gastan cuota.
+ */
+export const snapshots = sqliteTable("snapshots", {
+  key: text("key").primaryKey(),
+  json: text("json").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});

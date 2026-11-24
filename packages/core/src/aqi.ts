@@ -13,6 +13,7 @@ import type { IndexDefinition } from "./types.ts";
  *   SO2      0-20   21-40    41-125   126-190  191-275    >275
  *
  * Nombres de nivel en español como en el Índice Nacional de Calidad del Aire.
+ * Colores oficiales del índice; los emojis (para Telegram) son la aproximación más cercana a cada color.
  */
 export const EAQI: IndexDefinition = {
   id: "eaqi",
@@ -50,14 +51,14 @@ export const EAQI: IndexDefinition = {
     },
     {
       label: "Desfavorable",
-      icon: "🟠",
+      icon: "🔴",
       color: "#FF5050",
       advice: "Plantéate reducir la actividad intensa al aire libre si notas picor de ojos, tos o dolor de garganta.",
       adviceSensitive: "Plantéate reducir la actividad física, sobre todo al aire libre, si notas síntomas.",
     },
     {
       label: "Muy desfavorable",
-      icon: "🔴",
+      icon: "🟤",
       color: "#960032",
       advice: "Plantéate reducir la actividad intensa al aire libre si notas picor de ojos, tos o dolor de garganta.",
       adviceSensitive: "Reduce la actividad física, sobre todo al aire libre, si notas síntomas.",

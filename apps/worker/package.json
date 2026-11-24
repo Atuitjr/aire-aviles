@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --include \"../../packages/**/*.ts\" src/index.ts",
     "once": "tsx src/index.ts --once",
+    "backfill": "tsx src/backfill.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p ."
   },

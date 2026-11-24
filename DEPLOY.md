@@ -6,15 +6,17 @@ Cómo poner el proyecto en marcha sin depender de tu ordenador.
 |---|---|---|
 | Base de datos | **Turso** | Free |
 | Ingesta horaria + avisos por Telegram | **GitHub Actions**, disparado por **cron-job.org** | Gratis (repositorio público) |
-| Bot (comandos `/ahora`, `/suscribir`...) | **Cloudflare Workers** | Free |
+| Bot (comandos `/ahora`, `/suscribir`...) y API de datos | **Cloudflare Workers** | Free |
+| Web | **Cloudflare Pages** | Free |
 
 ```
 cron-job.org ──(cada hora)──▶ GitHub Actions ──▶ EEA (descarga)
                                     │
-                                    ├──▶ Turso (guarda medidas y episodios)
+                                    ├──▶ Turso (medidas, medias diarias, episodios y resúmenes para la web)
                                     └──▶ Telegram (avisos a los suscritos)
 
 Usuario de Telegram ──▶ Telegram ──(webhook)──▶ Cloudflare Worker ──▶ Turso
+Visitante de la web ──▶ Cloudflare Pages (páginas) ──▶ Cloudflare Worker /api/... ──▶ Turso (1 fila por petición)
 ```
 
 Los avisos salen de la ingesta, así que **no dependen del bot**: si el Worker fallara, solo dejarían de responder los comandos.
@@ -166,6 +168,59 @@ Para ver los logs del Worker en directo: `npm run logs -w @aviles/bot`.
 
 ---
 
+## 5. Histórico y web
+
+### 5.1 Orden importante
+
+Las tablas nuevas (medias diarias y resúmenes) tienen que existir en Turso **antes** de subir el código a GitHub. Si no, la siguiente ingesta horaria fallaría al guardar las medias diarias.
+
+```bat
+set DATABASE_URL=libsql://aire-aviles-TUUSUARIO.turso.io
+set DATABASE_AUTH_TOKEN=eyJ...
+npm install
+npm run db:push
+```
+
+`db:push` solo **añade** tablas: no toca las medidas ni las suscripciones.
+
+### 5.2 Carga histórica
+
+En la misma ventana:
+
+```bat
+npm run backfill
+```
+
+- Carga las medias diarias desde 2015 (datos verificados) y los datos horarios de este año, y prepara los resúmenes de la web.
+- Puede tardar un buen rato. Si se corta, vuelve a lanzarlo: se salta lo que ya hizo.
+- Para empezar en otro año: `npm run backfill -- --desde=2018`.
+
+### 5.3 Subir el código y redesplegar el Worker
+
+```bat
+git add .
+git commit -m "Histórico, resúmenes y web"
+git push
+npm run deploy -w @aviles/bot
+```
+
+El Worker ahora también sirve la API de la web. Compruébalo en el navegador:
+`https://aire-aviles-bot.TUSUBDOMINIO.workers.dev/api/status` debe devolver un JSON con las estaciones.
+
+### 5.4 Publicar la web
+
+```bat
+npm run deploy -w @aviles/web
+```
+
+La primera vez, Wrangler te pregunta si quieres crear el proyecto `aire-aviles` en Cloudflare Pages: responde que sí, rama de producción `main`. Al terminar te da la dirección, del tipo `https://aire-aviles.pages.dev`.
+
+La web es estática: solo hay que volver a publicarla cuando cambie su código, no cuando cambian los datos. Los datos los lee directamente de la API.
+
+> La web usa por defecto la API de `aire-aviles-bot.atuitjr-manga.workers.dev`. Si cambias el nombre del Worker, pon la nueva URL en `apps/web/src/config.ts` (o en la variable `PUBLIC_AIRE_API_URL` al publicar).
+
+---
+
 ## Desarrollo después del despliegue
 
 - Tu `.env` sigue apuntando a `data/aviles.db`: desarrollar en local no toca producción.
@@ -179,5 +234,6 @@ Para ver los logs del Worker en directo: `npm run logs -w @aviles/bot`.
 |---|---|---|
 | Turso | 500 M filas leídas y 10 M escritas al mes, 5 GB | Una fracción pequeña |
 | GitHub Actions | Ilimitado en repos públicos | ~720 ejecuciones al mes |
-| Cloudflare Workers | 100.000 peticiones al día, 10 ms de CPU por petición | Cada mensaje del bot es 1 petición |
+| Cloudflare Workers | 100.000 peticiones al día, 10 ms de CPU por petición | Cada mensaje del bot y cada carga de datos de la web es 1 petición (la web cachea 5 min) |
+| Cloudflare Pages | Ilimitado en visitas | Web estática |
 | cron-job.org | Gratis | 1 tarea |

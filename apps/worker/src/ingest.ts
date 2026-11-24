@@ -2,12 +2,16 @@ import type { Alert, Measurement, Registry, Station } from "@aviles/core";
 import { db, stations, measurements, subscriptions, alertsLog, writeTransaction } from "@aviles/db";
 import { desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { evaluateStation } from "./episodes.ts";
+import { officialDay, refreshDailyStats } from "./daily.ts";
+import { refreshSnapshots } from "./snapshots.ts";
 
 /** Filas por sentencia INSERT (7 columnas × 200 = 1.400 parámetros, muy por debajo del límite de SQLite) */
 const INSERT_CHUNK = 200;
 
-/** Ejecuta un ciclo completo: estaciones → medidas → episodios → avisos. */
+/** Ejecuta un ciclo completo: estaciones → medidas → medias diarias → episodios → avisos → resúmenes web. */
 export async function runIngest(registry: Registry): Promise<void> {
+  const stationsWithNewData = new Set<string>();
+
   for (const source of registry.sources.values()) {
     const started = Date.now();
 
@@ -55,7 +59,15 @@ export async function runIngest(registry: Registry): Promise<void> {
       }
     });
 
-    // 4. Episodios por estación, solo si la fuente tiene índice
+    // 4. Medias diarias de los días que han recibido datos nuevos (si fallan, seguimos: los avisos van antes)
+    try {
+      await refreshDailyStats(db, inserted.map((m) => officialDay(m.observedAt)));
+    } catch (err) {
+      console.error("[daily] Error al recalcular las medias diarias:", err);
+    }
+    for (const m of inserted) stationsWithNewData.add(m.stationId);
+
+    // 5. Episodios por estación, solo si la fuente tiene índice
     let alertCount = 0;
     if (source.index) {
       const hoursByStation = new Map<string, Date[]>();
@@ -74,6 +86,13 @@ export async function runIngest(registry: Registry): Promise<void> {
     console.log(
       `[${source.id}] ${fetched.length} leídas, ${inserted.length} nuevas, ${alertCount} avisos (${Date.now() - started} ms)`,
     );
+  }
+
+  // 6. Resúmenes para la web (si fallan, la ingesta y los avisos ya están hechos)
+  try {
+    await refreshSnapshots(db, [...stationsWithNewData]);
+  } catch (err) {
+    console.error("[snapshots] Error al recalcular los resúmenes:", err);
   }
 }
 

@@ -1,0 +1,25 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import StationView from "../../components/StationView.tsx";
+import { STATIONS } from "@aviles/source-eea-air";
+import { slugify } from "../../lib/format.ts";
+
+/** Una página estática por estación (buena para buscadores: "calidad del aire Llaranes") */
+export function getStaticPaths() {
+  return STATIONS.map((s) => ({
+    params: { slug: slugify(s.name) },
+    props: { id: s.id, name: s.name, zoneName: String(s.meta?.zoneName ?? "") },
+  }));
+}
+
+const { id, name, zoneName } = Astro.props;
+---
+
+<Layout
+  title={`Calidad del aire en ${name}`}
+  description={`Calidad del aire en la estación de ${name} (${zoneName}, Asturias): valores actuales hora a hora, evolución de los últimos días e histórico desde 2015.`}
+>
+  <div class="contenedor">
+    <StationView client:load stationId={id} name={name} zoneName={zoneName} />
+  </div>
+</Layout>

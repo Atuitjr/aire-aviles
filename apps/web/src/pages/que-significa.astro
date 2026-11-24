@@ -1,0 +1,204 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { EAQI } from "@aviles/core";
+import { BOT_URL } from "../config.ts";
+import { inkOn } from "../lib/levels.ts";
+
+const order = ["PM2.5", "PM10", "NO2", "O3", "SO2"];
+const pretty: Record<string, string> = { NO2: "NO₂", O3: "O₃", SO2: "SO₂" };
+const range = (metric: string, i: number) => {
+  const b = EAQI.bands[metric];
+  const from = i === 0 ? 0 : b[i - 1] + 1;
+  return i < b.length ? `${from}–${b[i]}` : `más de ${b[b.length - 1]}`;
+};
+---
+
+<Layout
+  title="Qué significa cada nivel"
+  description="Cómo se calcula el nivel de calidad del aire, qué contaminantes se miden, de dónde salen los datos y cuándo avisa el bot de Telegram."
+>
+  <article class="contenedor texto">
+    <h1>Qué significa cada nivel</h1>
+    <p class="entrada secundario">
+      Usamos el índice europeo de calidad del aire de la Agencia Europea de Medio Ambiente. Cada hora, cada contaminante
+      cae en uno de seis niveles, y el nivel de una estación es el del contaminante que peor está en ese momento.
+    </p>
+
+    <section aria-labelledby="niveles">
+      <h2 id="niveles">Los seis niveles</h2>
+      <ol class="niveles">
+        {
+          EAQI.levels.map((lv, i) => (
+            <li>
+              <span class="muestra" style={`background: var(--nivel-${i}); color: ${inkOn(i)}`}>
+                {i + 1}
+              </span>
+              <div>
+                <h3>{lv.label}</h3>
+                <p>{lv.advice}</p>
+                {lv.adviceSensitive !== lv.advice && <p class="secundario">Personas sensibles: {lv.adviceSensitive}</p>}
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="nota">
+        Personas sensibles: con problemas respiratorios o cardiacos, niños, mayores y embarazadas.
+      </p>
+    </section>
+
+    <section aria-labelledby="umbrales">
+      <h2 id="umbrales">Umbrales por contaminante</h2>
+      <p class="secundario">Microgramos por metro cúbico (µg/m³), valor medio de una hora.</p>
+      <div class="tabla-scroll ancha">
+        <table class="umbrales">
+          <thead>
+            <tr>
+              <th scope="col">Contaminante</th>
+              {EAQI.levels.map((lv, i) => <th scope="col"><span class="marca" style={`background: var(--nivel-${i})`}></span>{lv.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {
+              order.map((m) => (
+                <tr>
+                  <th scope="row">{pretty[m] ?? m}</th>
+                  {EAQI.levels.map((_, i) => <td>{range(m, i)}</td>)}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="contaminantes">
+      <h2 id="contaminantes">Qué se mide</h2>
+      <dl class="contaminantes">
+        <dt>Partículas PM10</dt>
+        <dd>Partículas de menos de 10 micras: polvo, tráfico, obras, industria y, a veces, polvo del Sáhara. Irritan las vías respiratorias.</dd>
+        <dt>Partículas finas PM2.5</dt>
+        <dd>Partículas de menos de 2,5 micras, sobre todo de combustiones (tráfico, calefacciones, industria). Llegan más adentro de los pulmones que las PM10, por eso sus umbrales son más bajos.</dd>
+        <dt>Dióxido de nitrógeno (NO₂)</dt>
+        <dd>Sale sobre todo del tráfico, especialmente diésel, y de otras combustiones. Irrita los bronquios.</dd>
+        <dt>Ozono (O₃)</dt>
+        <dd>No lo emite nadie directamente: se forma con el sol a partir de otros contaminantes. Sube en días soleados, por la tarde y en verano, y a menudo es más alto fuera de las ciudades.</dd>
+        <dt>Dióxido de azufre (SO₂)</dt>
+        <dd>De quemar combustibles con azufre: industria pesada y barcos. Irrita ojos y vías respiratorias.</dd>
+        <dt>Monóxido de carbono, benceno, NO y NOx</dt>
+        <dd>Se miden en algunas estaciones pero no forman parte del índice europeo. El benceno se vigila por su media anual, no por valores horarios.</dd>
+      </dl>
+    </section>
+
+    <section aria-labelledby="datos">
+      <h2 id="datos">De dónde salen los datos</h2>
+      <p>
+        De las estaciones de la Red de Control de la Calidad del Aire del Principado de Asturias. La Agencia Europea de
+        Medio Ambiente los publica casi en tiempo real; los recogemos cada hora. Llegan con unas 3 a 5 horas de retraso y
+        son provisionales: el organismo puede corregirlos después de validarlos.
+      </p>
+      <p>
+        El histórico de años anteriores usa los datos ya verificados y se muestra como medias diarias y mensuales. Las
+        horas se indican en hora peninsular española.
+      </p>
+    </section>
+
+    <section aria-labelledby="avisos">
+      <h2 id="avisos">Cuándo avisa el bot</h2>
+      <ul>
+        <li>Cuando una estación que sigues llega a <i>desfavorable</i> o peor.</li>
+        <li>Si durante el episodio empeora a un nivel que aún no te había avisado.</li>
+        <li>Cuando pasa dos horas seguidas por debajo de <i>desfavorable</i>: el episodio ha terminado.</li>
+      </ul>
+      <p>
+        Si un valor sube y baja alrededor del umbral, no recibirás un mensaje cada hora.
+        <a href={BOT_URL} rel="noopener">Abrir el bot en Telegram</a>
+      </p>
+    </section>
+  </article>
+
+  <style>
+    .texto {
+      display: grid;
+      gap: 3rem;
+    }
+    .texto section {
+      display: grid;
+      gap: 1rem;
+    }
+    .entrada {
+      font-size: var(--t1);
+      line-height: 1.45;
+    }
+    .niveles {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 1.1rem;
+      max-width: var(--medida);
+    }
+    .niveles li {
+      display: grid;
+      grid-template-columns: 2.75rem 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .niveles .muestra {
+      display: grid;
+      place-items: center;
+      height: 2.75rem;
+      border-radius: var(--radio);
+      font-weight: 800;
+    }
+    .niveles h3 {
+      font-size: var(--t0);
+      margin-bottom: 0.15rem;
+    }
+    .ancha {
+      max-height: none;
+    }
+    .umbrales {
+      border-collapse: collapse;
+      min-width: 40rem;
+      font-size: var(--t-1);
+    }
+    .umbrales th,
+    .umbrales td {
+      text-align: left;
+      padding: 0.5rem 0.9rem 0.5rem 0;
+      border-bottom: 1px solid var(--linea);
+      vertical-align: bottom;
+    }
+    .umbrales thead th {
+      font-weight: 600;
+      color: var(--tinta-2);
+    }
+    .umbrales .marca {
+      display: block;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      margin-bottom: 0.35rem;
+    }
+    .contaminantes {
+      margin: 0;
+      max-width: var(--medida);
+    }
+    .contaminantes dt {
+      font-weight: 700;
+      margin-top: 1rem;
+    }
+    .contaminantes dd {
+      margin: 0.2rem 0 0;
+    }
+    .texto ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      max-width: var(--medida);
+    }
+    .texto ul li + li {
+      margin-top: 0.3rem;
+    }
+  </style>
+</Layout>

@@ -1,10 +1,41 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import StationList from "../components/StationList.tsx";
+import HomeApp from "../components/HomeApp.tsx";
+import { BOT_URL } from "../config.ts";
 ---
 
-<Layout title="Calidad del aire en Avilés">
-  <h1>Calidad del aire en Avilés</h1>
-  <p>Últimas medidas de las estaciones municipales.</p>
-  <StationList client:load apiUrl={import.meta.env.PUBLIC_API_URL ?? "http://localhost:3001"} />
+<Layout>
+  <HomeApp client:load />
+
+  <section class="contenedor telegram" aria-labelledby="telegram-titulo">
+    <h2 id="telegram-titulo">Que te avise cuando empeore</h2>
+    <p class="secundario">
+      El bot de Telegram te escribe cuando la calidad del aire llega a <i>desfavorable</i> en las estaciones que elijas, con
+      recomendaciones para ese nivel, y vuelve a escribirte cuando el episodio termina. No hace falta registrarse.
+    </p>
+    <a class="boton" href={BOT_URL} rel="noopener">Abrir el bot en Telegram</a>
+  </section>
+
+  <style>
+    .telegram {
+      margin-top: 4.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--linea);
+      display: grid;
+      gap: 0.85rem;
+      justify-items: start;
+    }
+    .boton {
+      display: inline-block;
+      background: var(--tinta);
+      color: var(--niebla);
+      font-weight: 700;
+      padding: 0.6rem 1.1rem;
+      border-radius: 999px;
+      text-decoration: none;
+    }
+    .boton:hover {
+      text-decoration: underline;
+    }
+  </style>
 </Layout>
