@@ -19,6 +19,22 @@ if (!base?.startsWith("https://")) {
   console.error("Uso: npm run set-webhook -w @aviles/bot -- https://<tu-worker>.workers.dev");
   process.exit(1);
 }
+if (/TUSUBDOMINIO|<|>/i.test(base)) {
+  console.error(
+    "La URL todavía tiene el texto de ejemplo. Usa la URL real que te dio `npm run deploy -w @aviles/bot`\n" +
+      "(o la de Cloudflare → Workers & Pages → aire-aviles-bot).",
+  );
+  process.exit(1);
+}
+
+// Antes de tocar Telegram, comprobar que el Worker responde en esa URL
+try {
+  const res = await fetch(base);
+  if (!res.ok) throw new Error(`respuesta ${res.status}`);
+} catch (err) {
+  console.error(`No se puede abrir ${base} (${(err as Error).message}). ¿Está bien la URL y desplegado el Worker?`);
+  process.exit(1);
+}
 if (!token || !secret) {
   console.error("Faltan TELEGRAM_BOT_TOKEN o WEBHOOK_SECRET en el .env");
   process.exit(1);
@@ -31,11 +47,18 @@ if (!/^[A-Za-z0-9_-]{16,256}$/.test(secret)) {
 const api = new Api(token);
 const url = `${base}/telegram`;
 
-await api.setWebhook(url, {
-  secret_token: secret,
-  allowed_updates: ["message", "callback_query"],
-});
-await api.setMyCommands(COMMANDS);
+try {
+  await api.setWebhook(url, {
+    secret_token: secret,
+    allowed_updates: ["message", "callback_query"],
+  });
+  await api.setMyCommands(COMMANDS);
+} catch (err) {
+  // Mostrar solo el motivo: el error completo de grammY incluye el secreto en el payload
+  const e = err as { description?: string; message?: string };
+  console.error(`Telegram ha rechazado la configuración: ${e.description ?? e.message}`);
+  process.exit(1);
+}
 
 const info = await api.getWebhookInfo();
 console.log(`Webhook configurado: ${info.url}`);
